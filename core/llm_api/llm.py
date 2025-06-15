@@ -11,6 +11,7 @@ import attrs
 
 from core.llm_api.anthropic_llm import ANTHROPIC_MODELS, AnthropicChatModel
 from core.llm_api.base_llm import LLMResponse, ModelAPIProtocol
+from core.llm_api.nnsight_llm import NNSIGHT_MODELS, NNSightModel
 from core.llm_api.openai_llm import (
     BASE_MODELS,
     GPT_CHAT_MODELS,
@@ -32,11 +33,13 @@ class ModelAPI:
     )
     organization: str = "NYU_ORG"
     print_prompt_and_response: bool = False
+    nnsight_api_key: Optional[str] = None
 
     _openai_base: OpenAIBaseModel = attrs.field(init=False)
     _openai_base_arg: OpenAIBaseModel = attrs.field(init=False)
     _openai_chat: OpenAIChatModel = attrs.field(init=False)
     _anthropic_chat: AnthropicChatModel = attrs.field(init=False)
+    _nnsight: Optional[NNSightModel] = attrs.field(init=False, default=None)
 
     running_cost: float = attrs.field(init=False, default=0)
     model_timings: dict[str, list[float]] = attrs.field(init=False, default={})
@@ -65,6 +68,11 @@ class ModelAPI:
             num_threads=self.anthropic_num_threads,
             print_prompt_and_response=self.print_prompt_and_response,
         )
+        if self.nnsight_api_key:
+            self._nnsight = NNSightModel(
+                api_key=self.nnsight_api_key,
+                print_prompt_and_response=self.print_prompt_and_response,
+            )
         Path("./prompt_history").mkdir(exist_ok=True)
 
     @staticmethod
@@ -154,10 +162,12 @@ class ModelAPI:
             # # trick to double rate limit for most recent model only
 
         def model_id_to_class(model_id: str) -> ModelAPIProtocol:
-            if model_id in ["gpt-4-base", "gpt-3.5-turbo-instruct"]:
-                return (
-                    self._openai_base_arg
-                )  # NYU ARG is only org with access to this model
+            if model_id in NNSIGHT_MODELS:
+                if self._nnsight is None:
+                    raise ValueError("NNSight API key not provided")
+                return self._nnsight
+            elif model_id in ["gpt-4-base", "gpt-3.5-turbo-instruct"]:
+                return self._openai_base_arg  # NYU ARG is only org with access to this model
             elif model_id in BASE_MODELS:
                 return self._openai_base
             elif model_id in GPT_CHAT_MODELS or "ft:gpt-3.5-turbo" in model_id:
