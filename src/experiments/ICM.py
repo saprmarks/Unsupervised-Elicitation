@@ -74,7 +74,7 @@ def update_assign(data):
     return data
 
 
-def fix_inconsistency(demonstrations, cur_metric, name, alpha, iter=0, K=20):
+def fix_inconsistency(demonstrations, cur_metric, name, alpha, iter=0, K=20, model_api=None):
     backup_metric = deepcopy(cur_metric)
     if cur_metric["inconsistent_num"] == 0:
         return demonstrations, cur_metric
@@ -91,6 +91,7 @@ def fix_inconsistency(demonstrations, cur_metric, name, alpha, iter=0, K=20):
             name=name,
             iter=f"{iter}-{k}",
             assignment=assignment,
+            model_api=model_api,
         )
         results = asyncio.run(pipeline.run())
         decisions = results["decisions"]
@@ -109,6 +110,7 @@ def fix_inconsistency(demonstrations, cur_metric, name, alpha, iter=0, K=20):
                     name=name,
                     iter=f"{iter}-{k}-{decision_id}-{score_idx}",
                     assignment=tmp_assignment,
+                    model_api=model_api,
                 )
                 tmp_results = asyncio.run(tmp_pipeline.run())
                 tmp_metric = tmp_results["evaluate"]
@@ -147,6 +149,7 @@ def get_pipeline(
     decision_id=None,
     iter=None,
     assignment=None,
+    model_api=None,
 ):
     pipeline_name = f"iterative-truth-assign-iter-{iter}"
     if decision_id is not None:
@@ -165,7 +168,7 @@ def get_pipeline(
         num_problems=num_problems,
         use_cache=use_cache,
     )
-    pipeline = Pipeline(pipeline_config)
+    pipeline = Pipeline(pipeline_config, model_api=model_api)
 
     assert assignment is not None
     initial_assign = pipeline.add_load_data_step(
@@ -456,12 +459,13 @@ def main(args):
                 num_problems=None,
                 iter=iter,
                 assignment=cur_pool,
+                model_api=model_api,
             )
             results = asyncio.run(pipeline.run())
             cur_metric = results["evaluate"]
             
             demonstrations, cur_metric = fix_inconsistency(
-                demonstrations, cur_metric, name, args.alpha, iter=iter, K=args.consistency_fix_K
+                demonstrations, cur_metric, name, args.alpha, iter=iter, K=args.consistency_fix_K, model_api=model_api
             )
             
         cur_pool = {
@@ -507,6 +511,7 @@ def main(args):
                 args.alpha,
                 iter=iter,
                 K=10,
+                model_api=model_api,
             )
             
             tmp_pool = {
@@ -520,6 +525,7 @@ def main(args):
                 num_problems=None,
                 iter=iter,
                 assignment=tmp_pool,
+                model_api=model_api,
             )
             results = asyncio.run(pipeline.run())
             metric = results["evaluate"]

@@ -14,7 +14,7 @@ import attrs
 import openai
 import requests
 import tiktoken
-from openai.openai_object import OpenAIObject as OpenAICompletion
+# from openai.openai_object import OpenAIObject as OpenAICompletion
 from tenacity import retry, stop_after_attempt, wait_fixed
 from termcolor import cprint
 

@@ -82,17 +82,21 @@ class PipelineConfig:
 
 
 class Pipeline:
-    def __init__(self, config):
+    def __init__(self, config, model_api=None):
         self.config = config
         self.steps = []
         self.step_names = set()
         self.results = {}
-        self.model_api = ModelAPI(
-            self.config.anthropic_num_threads,
-            self.config.openai_fraction_rate_limit,
-            self.config.organization,
-            self.config.print_prompt_and_response,
-        )
+        # Use provided model_api or create a new one
+        if model_api is not None:
+            self.model_api = model_api
+        else:
+            self.model_api = ModelAPI(
+                self.config.anthropic_num_threads,
+                self.config.openai_fraction_rate_limit,
+                self.config.organization,
+                self.config.print_prompt_and_response,
+            )
         self.file_sem = asyncio.BoundedSemaphore(self.config.num_open_files)
         self.cost = {"red": 0, "blue": 0}
 

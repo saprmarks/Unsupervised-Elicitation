@@ -68,9 +68,14 @@ class ModelAPI:
             num_threads=self.anthropic_num_threads,
             print_prompt_and_response=self.print_prompt_and_response,
         )
+        
+        # Load NNSight API key from SECRETS file if not provided
+        if self.nnsight_api_key is None and "NNSIGHT_API_KEY" in secrets:
+            self.nnsight_api_key = secrets["NNSIGHT_API_KEY"]
+        
         if self.nnsight_api_key:
             self._nnsight = NNSightModel(
-                api_key=self.nnsight_api_key,
+                # api_key=self.nnsight_api_key,
                 print_prompt_and_response=self.print_prompt_and_response,
             )
         Path("./prompt_history").mkdir(exist_ok=True)

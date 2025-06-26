@@ -114,6 +114,7 @@ def propose_consistencyfix(
     iter=None,
     assignment=None,
     use_cache=True,
+    model_api=None,
 ):
     pipeline_name = f"propose-consistencyfix-iter-{iter}"
     if name is not None:
@@ -125,7 +126,7 @@ def propose_consistencyfix(
         num_problems=None,
         use_cache=use_cache,
     )
-    pipeline = Pipeline(pipeline_config)
+    pipeline = Pipeline(pipeline_config, model_api=model_api)
 
     initial_assign = pipeline.add_load_data_step(
         "get_assign", load_assignments, assignment
@@ -157,6 +158,7 @@ def run_consistencyfix(
     decision=None,
     iter=None,
     assignment=None,
+    model_api=None,
 ):
     pipeline_name = f"consistencyfix-iter-{iter}"
     if decision_id is not None:
@@ -171,7 +173,7 @@ def run_consistencyfix(
         num_problems=None,
         use_cache=use_cache,
     )
-    pipeline = Pipeline(pipeline_config)
+    pipeline = Pipeline(pipeline_config, model_api=model_api)
 
     assert assignment is not None
     initial_assign = pipeline.add_load_data_step(
